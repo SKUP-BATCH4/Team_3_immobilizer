@@ -65,119 +65,107 @@
 unsigned int si();
 unsigned int ci();
 unsigned int cantransmit();
-unsigned int write (unsigned int, unsigned char);
-unsigned int read (unsigned char);
-unsigned int canreceive();
-unsigned int msg[5];
-unsigned int si()
-{
-    INTCONbits.GIE=1;
-    INTCONbits.PEIE=1;
-    
+unsigned int write(unsigned int, unsigned char);
+unsigned int read(unsigned char);
+
+unsigned int si() {
+    INTCONbits.GIE = 1;
+    INTCONbits.PEIE = 1;
+
 }
-unsigned int ci()
-{
-    TRISBbits.RB2=0;
-    TRISBbits.RB3=1;
+
+unsigned int ci() {
+    TRISBbits.RB2 = 0;
+    TRISBbits.RB3 = 1;
     CANCON |= 0x80;
-    while (CANSTAT!=0x00)
-    {
-        BRGCON1=0xC1;
-        BRGCON2=0xAE;
-        BRGCON3=0x45;
-        CIOCON=0x20;
-        CANCON=0x00;
-        
+    while (CANSTAT != 0x00) {
+        BRGCON1 = 0xC1;
+        BRGCON2 = 0xAE;
+        BRGCON3 = 0x45;
+        CIOCON = 0x20;
+        CANCON = 0x00;
+
     }
 }
-unsigned int cantransmit()
-{
-    
-    CANCON=0x00;//normal mode
+
+unsigned int cantransmit() {
+
+    CANCON = 0x00; //normal mode
     //TXB0CON=0x77;//arbitration
     //0X50
-    TXB0SIDH=0x14;//8 bit high
-    TXB0SIDL=0x00;// 3 bit low
-    TXB0DLC=0x08;//data length
+    TXB0SIDH = 0x10; //8 bit high
+    TXB0SIDL = 0x00; // 3 bit low
+    TXB0DLC = 0x01; //data length
     //actual data
-    TXB0D0=read(0xAB);
-    TXB0D1=read(0xAC);
-    TXB0CON=0x08;
+    TXB0D0 = read(0xAB);
+    TXB0D1 = read(0xAC);
+    TXB0CON = 0x08;
 }
 
-/*unsigned int canreceive()
-{
-    
-    CANCON=0x00;
-    RXB0SIDH=0x14;//rec
-    RXB0SIDL=0x00;
-    RXB0DLC=0x08;//Dl
-    RXF0SIDH=0x01;//filter
-    RXF0SIDL=0x00;
-    RXM0SIDH=0x01;//mask
-    RXM0SIDL=0x00;
-    msg[0]=RXB0D0;
-    RXB0CONbits.RXM0=0x01;
-    return;
-}*/
+unsigned int write(unsigned int data, unsigned char add) {
+    EEDATA = data;
+    EEADR = add;
+    EECON2 = 0X55;
+    EECON2 = 0XAA;
+    EECON1bits.WREN = 1;
+    EECON1bits.WR = 1;
 
-unsigned int write (unsigned int data, unsigned char add)
-{
-        EEDATA = data;
-        EEADR = add;
-        EECON2 = 0X55;
-        EECON2 = 0XAA;
-        EECON1bits.WREN=1;
-        EECON1bits.WR=1;
-   
 }
-unsigned int read (unsigned char add)
-{
+
+unsigned int read(unsigned char add) {
     unsigned int data;
-    EECON1bits.RD=1;
-    EEADR=add;
-    data=EEDATA;
+    EECON1bits.RD = 1;
+    EEADR = add;
+    data = EEDATA;
     return data;
-    
+
 }
+
 void main(void) {
-    int i;
-    TRISA=0;
-    EECON1bits.EEPGD=0;
-    EECON1bits.CFGS=1;
-    TRISBbits.RB0=0;
-    LATA=0;
+   
+    TRISA = 0;
+    EECON1bits.EEPGD = 0;
+    EECON1bits.CFGS = 1;
+    TRISBbits.RB0 = 0;
+    TRISBbits.RB1 = 0;
+    LATA = 0;
     si();
     ci();
-    //canreceive();
-    
-    
-    
-    if(PORTBbits.RB0==0)
-    {
-       LATAbits.LA0=1;
-       LATAbits.LA1=1;
-       __delay_ms(3000);
-       LATAbits.LA0=0;
-       LATAbits.LA1=0;
-       write(0x01,0xAB);
-       cantransmit();
-    }
-    if(PORTBbits.RB0==1)
-    {
-        while(i<3)
-        {
-            LATAbits.LA0=1;
-            LATAbits.LA1=1;
-            __delay_ms(1000);
-            LATAbits.LA1=0;
-            LATAbits.LA0=0;
-            __delay_ms(1000);
-                i++;
-        }
-        write(0x02,0xAC);
+    if (PORTBbits.RB0 == 0) {
+        LATAbits.LA0 = 1;
+        LATAbits.LA1 = 1;
+        __delay_ms(3000);
+        LATAbits.LA0 = 0;
+        LATAbits.LA1 = 0;
+        write(0x01, 0xAB);
         cantransmit();
     }
+   
+    if (PORTBbits.RB1 == 0) {
+
+        LATAbits.LA0 = 1;
+        LATAbits.LA1 = 1;
+        __delay_ms(1000);
+        LATAbits.LA1 = 0;
+        LATAbits.LA0 = 0;
+        __delay_ms(1000);
+        LATAbits.LA0 = 1;
+        LATAbits.LA1 = 1;
+        __delay_ms(1000);
+        LATAbits.LA1 = 0;
+        LATAbits.LA0 = 0;
+        __delay_ms(1000);
+        LATAbits.LA0 = 1;
+        LATAbits.LA1 = 1;
+        __delay_ms(1000);
+        LATAbits.LA1 = 0;
+        LATAbits.LA0 = 0;
+        __delay_ms(1000);
+        write(0x02, 0xAC);
+        cantransmit();
+        
+    }
+    //while(1);
     return;
- 
+
 }
